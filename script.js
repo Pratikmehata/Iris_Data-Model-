@@ -1,50 +1,43 @@
-document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+document.getElementById('irisForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Show loading spinner
-    const spinner = document.getElementById('spinner');
-    spinner.classList.remove('d-none');
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    btn.textContent = 'Predicting...';
     
     try {
+        const data = {
+            sepal_length: document.getElementById('sepal_length').value,
+            sepal_width: document.getElementById('sepal_width').value,
+            petal_length: document.getElementById('petal_length').value,
+            petal_width: document.getElementById('petal_width').value
+        };
+
         const response = await fetch('/predict', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sepal_length: document.getElementById('sepal_length').value,
-                sepal_width: document.getElementById('sepal_width').value,
-                petal_length: document.getElementById('petal_length').value,
-                petal_width: document.getElementById('petal_width').value
-            })
+            body: JSON.stringify(data)
         });
 
-        const data = await response.json();
+        const result = await response.json();
         
-        if (data.success) {
-            // Display results
-            document.getElementById('predictionResult').textContent = data.prediction;
-            document.getElementById('flowerImage').src = data.image_url;
-            document.getElementById('funFact').textContent = data.fun_fact;
-            
-            // Switch views
-            document.getElementById('result').classList.remove('d-none');
-            document.getElementById('predictionForm').classList.add('d-none');
-            
-            // Smooth scroll to results
-            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        if (result.success) {
+            document.getElementById('prediction').textContent = result.species;
+            document.getElementById('confidence').textContent = (result.confidence * 100).toFixed(1);
+            document.querySelector('.confidence-level').style.width = `${result.confidence * 100}%`;
+            document.getElementById('result').classList.remove('hidden');
         } else {
-            alert(`Error: ${data.error}`);
+            alert(`Error: ${result.error}`);
         }
     } catch (error) {
         alert('Failed to connect to server');
     } finally {
-        spinner.classList.add('d-none');
+        btn.disabled = false;
+        btn.textContent = 'Predict Species';
     }
 });
 
-// Reset button
 document.getElementById('resetBtn').addEventListener('click', () => {
-    document.getElementById('predictionForm').reset();
-    document.getElementById('result').classList.add('d-none');
-    document.getElementById('predictionForm').classList.remove('d-none');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('irisForm').reset();
+    document.getElementById('result').classList.add('hidden');
 });
